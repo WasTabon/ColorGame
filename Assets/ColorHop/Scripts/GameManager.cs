@@ -5,6 +5,14 @@ public class GameManager : MonoBehaviour
     public GridManager Grid;
     public PlayerCube Player;
     public DragDetector DragDetector;
+    public MatchDetector MatchDetector;
+    public SearchTimer SearchTimer;
+    public ScoreManager ScoreManager;
+    public RowBreaker RowBreaker;
+    public HUDController HUD;
+    public GameOverPopup GameOverPopup;
+
+    public GameState State { get; private set; } = GameState.Playing;
 
     private float dragStartPointerX;
     private float dragStartCubeX;
@@ -14,10 +22,29 @@ public class GameManager : MonoBehaviour
         Debug.Assert(Grid != null, "Grid not assigned!");
         Debug.Assert(Player != null, "Player not assigned!");
         Debug.Assert(DragDetector != null, "DragDetector not assigned!");
+        Debug.Assert(MatchDetector != null, "MatchDetector not assigned!");
+        Debug.Assert(SearchTimer != null, "SearchTimer not assigned!");
+        Debug.Assert(ScoreManager != null, "ScoreManager not assigned!");
+        Debug.Assert(RowBreaker != null, "RowBreaker not assigned!");
+        Debug.Assert(HUD != null, "HUD not assigned!");
+        Debug.Assert(GameOverPopup != null, "GameOverPopup not assigned!");
 
         Player.SetColor(0);
         Player.SetColumnInstant(2, Grid.CellSize, Grid.Columns);
 
+        SubscribeEvents();
+
+        HUD.Initialize();
+        ScoreManager.ResetScore();
+        HUD.SetScoreImmediate(0);
+        Grid.StartGrid();
+        MatchDetector.StartDetection();
+        SearchTimer.StartTimer();
+        State = GameState.Playing;
+    }
+
+    private void SubscribeEvents()
+    {
         DragDetector.OnDragBegin -= HandleDragBegin;
         DragDetector.OnDragBegin += HandleDragBegin;
         DragDetector.OnDragMove -= HandleDragMove;
@@ -25,17 +52,55 @@ public class GameManager : MonoBehaviour
         DragDetector.OnDragEnd -= HandleDragEnd;
         DragDetector.OnDragEnd += HandleDragEnd;
 
-        Grid.StartGrid();
+        MatchDetector.OnMatch -= HandleMatch;
+        MatchDetector.OnMatch += HandleMatch;
+
+        SearchTimer.OnTimeChanged -= HandleTimerChanged;
+        SearchTimer.OnTimeChanged += HandleTimerChanged;
+        SearchTimer.OnTimeout -= HandleTimeout;
+        SearchTimer.OnTimeout += HandleTimeout;
+
+        ScoreManager.OnScoreChanged -= HandleScoreChanged;
+        ScoreManager.OnScoreChanged += HandleScoreChanged;
+
+        GameOverPopup.OnRestart -= HandleRestart;
+        GameOverPopup.OnRestart += HandleRestart;
+        GameOverPopup.OnMenu -= HandleMenu;
+        GameOverPopup.OnMenu += HandleMenu;
+    }
+
+    private void UnsubscribeEvents()
+    {
+        if (DragDetector != null)
+        {
+            DragDetector.OnDragBegin -= HandleDragBegin;
+            DragDetector.OnDragMove -= HandleDragMove;
+            DragDetector.OnDragEnd -= HandleDragEnd;
+        }
+        if (MatchDetector != null) MatchDetector.OnMatch -= HandleMatch;
+        if (SearchTimer != null)
+        {
+            SearchTimer.OnTimeChanged -= HandleTimerChanged;
+            SearchTimer.OnTimeout -= HandleTimeout;
+        }
+        if (ScoreManager != null) ScoreManager.OnScoreChanged -= HandleScoreChanged;
+        if (GameOverPopup != null)
+        {
+            GameOverPopup.OnRestart -= HandleRestart;
+            GameOverPopup.OnMenu -= HandleMenu;
+        }
     }
 
     private void HandleDragBegin(float pointerCanvasX)
     {
+        if (State != GameState.Playing) return;
         dragStartPointerX = pointerCanvasX;
         dragStartCubeX = Player.Rect.anchoredPosition.x;
     }
 
     private void HandleDragMove(float pointerCanvasX)
     {
+        if (State != GameState.Playing) return;
         float delta = pointerCanvasX - dragStartPointerX;
         float targetX = dragStartCubeX + delta;
 
@@ -47,16 +112,79 @@ public class GameManager : MonoBehaviour
 
     private void HandleDragEnd()
     {
+        if (State != GameState.Playing) return;
         Player.SnapToNearestColumn(Grid.CellSize, Grid.Columns);
+    }
+
+    private void HandleMatch(RowContainer row, int column)
+    {
+        if (State != GameState.Playing) return;
+
+        RowBreaker.BreakRow(row, column);
+        Grid.OnRowMatched(row);
+        StartCoroutine(ReturnRowDelayed(row, 0.3f));
+
+        MatchDetector.StopDetection();
+        StartCoroutine(ResumeDetectionDelayed(Grid.LastAdvanceDuration));
+
+        ScoreManager.AddScore(1);
+        SearchTimer.ResetOnMatch();
+        Player.PunchSuccess();
+
+        if (HapticManager.Instance != null) HapticManager.Instance.Light();
+    }
+
+    private System.Collections.IEnumerator ReturnRowDelayed(RowContainer row, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Grid.ReturnRowToPool(row);
+    }
+
+    private System.Collections.IEnumerator ResumeDetectionDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (State == GameState.Playing) MatchDetector.StartDetection();
+    }
+
+    private void HandleTimerChanged(float current, float max)
+    {
+        HUD.UpdateTimer(current, max);
+    }
+
+    private void HandleTimeout()
+    {
+        TriggerGameOver();
+    }
+
+    private void HandleScoreChanged(int newScore)
+    {
+        HUD.SetScoreAnimated(newScore);
+    }
+
+    private void TriggerGameOver()
+    {
+        State = GameState.GameOver;
+        SearchTimer.StopTimer();
+        MatchDetector.StopDetection();
+        Grid.StopGrid();
+
+        if (HapticManager.Instance != null) HapticManager.Instance.Medium();
+
+        GameOverPopup.Show(ScoreManager.Score, ScoreManager.BestScore);
+    }
+
+    private void HandleRestart()
+    {
+        TransitionManager.Instance.LoadScene("Game");
+    }
+
+    private void HandleMenu()
+    {
+        TransitionManager.Instance.LoadScene("MainMenu");
     }
 
     private void OnDestroy()
     {
-        if (DragDetector != null)
-        {
-            DragDetector.OnDragBegin -= HandleDragBegin;
-            DragDetector.OnDragMove -= HandleDragMove;
-            DragDetector.OnDragEnd -= HandleDragEnd;
-        }
+        UnsubscribeEvents();
     }
 }

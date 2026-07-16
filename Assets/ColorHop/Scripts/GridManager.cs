@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,13 +11,17 @@ public class GridManager : MonoBehaviour
     public int Columns = 5;
     public float CellSize = 216f;
     public float CellGap = 6f;
-    public float ScrollSpeed = 400f;
-    public float PlayerY = 620f;
+    public float PlayerY = 550f;
     public int InitialRows = 10;
+    public float RowSnapThreshold = 40f;
+    public float AdvanceDuration = 0.25f;
 
     private List<RowContainer> activeRows = new List<RowContainer>();
     private Queue<RowContainer> rowPool = new Queue<RowContainer>();
     private bool running;
+
+    public bool IsRunning { get { return running; } }
+    public float LastAdvanceDuration { get { return AdvanceDuration; } }
 
     public void StartGrid()
     {
@@ -24,48 +29,82 @@ public class GridManager : MonoBehaviour
 
         for (int i = 0; i < InitialRows; i++)
         {
-            float y = PlayerY - i * CellSize;
+            float y = PlayerY - (i + 1) * CellSize;
             SpawnRow(y);
         }
 
         running = true;
     }
 
-    private void Update()
+    public void StopGrid()
     {
-        if (!running) return;
+        running = false;
+    }
 
-        float delta = ScrollSpeed * Time.deltaTime;
+    public void ResumeGrid()
+    {
+        running = true;
+    }
+
+    public RowContainer FindTopRow()
+    {
+        RowContainer top = null;
+        float minDist = RowSnapThreshold;
+        float targetY = PlayerY - CellSize;
+        for (int i = 0; i < activeRows.Count; i++)
+        {
+            float dist = Mathf.Abs(activeRows[i].Rect.anchoredPosition.y - targetY);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                top = activeRows[i];
+            }
+        }
+        return top;
+    }
+
+    public int GetColumnAtX(float x)
+    {
+        float halfWidth = Columns * CellSize * 0.5f;
+        float leftEdge = -halfWidth + CellSize * 0.5f;
+        int col = Mathf.RoundToInt((x - leftEdge) / CellSize);
+        return Mathf.Clamp(col, 0, Columns - 1);
+    }
+
+    public void OnRowMatched(RowContainer matchedRow)
+    {
+        int idx = activeRows.IndexOf(matchedRow);
+        if (idx < 0)
+        {
+            Debug.LogWarning("OnRowMatched called with row not in active list");
+            return;
+        }
+        activeRows.RemoveAt(idx);
+
+        float minY = float.MaxValue;
+        for (int i = 0; i < activeRows.Count; i++)
+        {
+            float y = activeRows[i].Rect.anchoredPosition.y;
+            if (y < minY) minY = y;
+        }
+
+        if (activeRows.Count == 0) minY = PlayerY - CellSize;
+
+        float newRowY = minY - CellSize;
+        SpawnRow(newRowY);
 
         for (int i = 0; i < activeRows.Count; i++)
         {
             Vector2 pos = activeRows[i].Rect.anchoredPosition;
-            pos.y += delta;
-            activeRows[i].Rect.anchoredPosition = pos;
+            Vector2 target = new Vector2(pos.x, pos.y + CellSize);
+            activeRows[i].Rect.DOKill(false);
+            activeRows[i].Rect.DOAnchorPos(target, AdvanceDuration).SetEase(Ease.OutQuad);
         }
+    }
 
-        for (int i = activeRows.Count - 1; i >= 0; i--)
-        {
-            if (activeRows[i].Rect.anchoredPosition.y > PlayerY + CellSize)
-            {
-                DespawnRow(activeRows[i]);
-                activeRows.RemoveAt(i);
-            }
-        }
-
-        float bottomY = float.MaxValue;
-        for (int i = 0; i < activeRows.Count; i++)
-        {
-            float y = activeRows[i].Rect.anchoredPosition.y;
-            if (y < bottomY) bottomY = y;
-        }
-
-        float targetBottomY = PlayerY - (InitialRows - 1) * CellSize;
-        while (bottomY > targetBottomY)
-        {
-            bottomY -= CellSize;
-            SpawnRow(bottomY);
-        }
+    public void ReturnRowToPool(RowContainer row)
+    {
+        DespawnRow(row);
     }
 
     private void SpawnRow(float y)
@@ -81,6 +120,8 @@ public class GridManager : MonoBehaviour
             row = CreateNewRow();
         }
 
+        row.Rect.DOKill(false);
+        row.Rect.localScale = Vector3.one;
         Vector2 pos = row.Rect.anchoredPosition;
         pos.x = 0f;
         pos.y = y;
@@ -109,7 +150,9 @@ public class GridManager : MonoBehaviour
 
     private void DespawnRow(RowContainer row)
     {
+        row.Rect.DOKill(false);
         row.gameObject.SetActive(false);
+        row.Rect.localScale = Vector3.one;
         rowPool.Enqueue(row);
     }
 

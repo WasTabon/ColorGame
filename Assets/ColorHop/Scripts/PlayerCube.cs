@@ -56,6 +56,13 @@ public class PlayerCube : MonoBehaviour
         PlaySquash();
     }
 
+    public void PunchSuccess()
+    {
+        if (squashTween != null) squashTween.Kill();
+        Rect.localScale = baseScale;
+        squashTween = Rect.DOPunchScale(Vector3.one * 0.35f, 0.35f, 8, 0.6f);
+    }
+
     private void PlaySquash()
     {
         if (squashTween != null) squashTween.Kill();
