@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour
     public SettingsPopup SettingsPopup;
     public UnityEngine.UI.Button SettingsButton;
     public ConfettiBurst Confetti;
+    public ExitConfirmPopup ExitConfirmPopup;
+    public UnityEngine.UI.Button ExitButton;
+    public TutorialPopup TutorialPopup;
 
     public GameState State { get; private set; } = GameState.Playing;
 
@@ -44,9 +47,18 @@ public class GameManager : MonoBehaviour
         Debug.Assert(SettingsPopup != null, "SettingsPopup not assigned!");
         Debug.Assert(SettingsButton != null, "SettingsButton not assigned!");
         Debug.Assert(Confetti != null, "Confetti not assigned!");
+        Debug.Assert(ExitConfirmPopup != null, "ExitConfirmPopup not assigned!");
+        Debug.Assert(ExitButton != null, "ExitButton not assigned!");
+        Debug.Assert(TutorialPopup != null, "TutorialPopup not assigned!");
 
         SettingsButton.onClick.RemoveListener(HandleSettingsClicked);
         SettingsButton.onClick.AddListener(HandleSettingsClicked);
+
+        ExitButton.onClick.RemoveListener(HandleExitClicked);
+        ExitButton.onClick.AddListener(HandleExitClicked);
+
+        ExitConfirmPopup.OnConfirmExit -= HandleExitConfirmed;
+        ExitConfirmPopup.OnConfirmExit += HandleExitConfirmed;
 
         Player.SetColor(0);
         Player.SetColumnInstant(2, Grid.CellSize, Grid.Columns);
@@ -64,6 +76,22 @@ public class GameManager : MonoBehaviour
 
         StartCountdown.OnCountdownFinished -= HandleCountdownFinished;
         StartCountdown.OnCountdownFinished += HandleCountdownFinished;
+
+        TutorialPopup.OnTutorialFinished -= HandleTutorialFinished;
+        TutorialPopup.OnTutorialFinished += HandleTutorialFinished;
+
+        if (TutorialPopup.ShouldShow())
+        {
+            TutorialPopup.Show();
+        }
+        else
+        {
+            StartCountdown.PlayCountdown();
+        }
+    }
+
+    private void HandleTutorialFinished()
+    {
         StartCountdown.PlayCountdown();
     }
 
@@ -77,6 +105,18 @@ public class GameManager : MonoBehaviour
     {
         if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         SettingsPopup.Show();
+    }
+
+    private void HandleExitClicked()
+    {
+        if (State != GameState.Playing) return;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
+        ExitConfirmPopup.Show();
+    }
+
+    private void HandleExitConfirmed()
+    {
+        TransitionManager.Instance.LoadScene("MainMenu");
     }
 
     private void SubscribeEvents()
@@ -130,6 +170,8 @@ public class GameManager : MonoBehaviour
         }
         if (ComboManager != null) ComboManager.OnComboMilestone -= HandleComboMilestone;
         if (StartCountdown != null) StartCountdown.OnCountdownFinished -= HandleCountdownFinished;
+        if (ExitConfirmPopup != null) ExitConfirmPopup.OnConfirmExit -= HandleExitConfirmed;
+        if (TutorialPopup != null) TutorialPopup.OnTutorialFinished -= HandleTutorialFinished;
     }
 
     private void HandleDragBegin(float pointerCanvasX)

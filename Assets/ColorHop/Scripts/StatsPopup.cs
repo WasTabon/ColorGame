@@ -22,7 +22,6 @@ public class StatsPopup : MonoBehaviour
         Debug.Assert(CloseButton != null, "CloseButton not assigned!");
 
         CloseButton.onClick.AddListener(HandleClose);
-        gameObject.SetActive(false);
     }
 
     public void Show()

@@ -23,8 +23,6 @@ public class SettingsPopup : MonoBehaviour
         SoundToggle.onValueChanged.AddListener(HandleSoundChanged);
         MusicToggle.onValueChanged.AddListener(HandleMusicChanged);
         HapticToggle.onValueChanged.AddListener(HandleHapticChanged);
-
-        gameObject.SetActive(false);
     }
 
     public void Show()

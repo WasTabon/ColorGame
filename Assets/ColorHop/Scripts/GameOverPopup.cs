@@ -24,7 +24,6 @@ public class GameOverPopup : MonoBehaviour
 
         RestartButton.onClick.AddListener(HandleRestart);
         MenuButton.onClick.AddListener(HandleMenu);
-        gameObject.SetActive(false);
     }
 
     public void Show(int score, int best)
