@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,12 +27,23 @@ public class StatsPopup : MonoBehaviour
 
     public void Show()
     {
-        BestScoreText.text = "BEST SCORE  " + StatsManager.GetBestScore();
-        TotalGamesText.text = "GAMES PLAYED  " + StatsManager.GetTotalGames();
-        TotalBlocksText.text = "BLOCKS BROKEN  " + StatsManager.GetTotalBlocksBroken();
-        BestComboText.text = "BEST COMBO  " + StatsManager.GetBestCombo();
-
         Popup.Open();
+
+        AnimateCount(BestScoreText, "BEST SCORE  ", StatsManager.GetBestScore());
+        AnimateCount(TotalGamesText, "GAMES PLAYED  ", StatsManager.GetTotalGames());
+        AnimateCount(TotalBlocksText, "BLOCKS BROKEN  ", StatsManager.GetTotalBlocksBroken());
+        AnimateCount(BestComboText, "BEST COMBO  ", StatsManager.GetBestCombo());
+    }
+
+    private void AnimateCount(TextMeshProUGUI label, string prefix, int target)
+    {
+        label.text = prefix + "0";
+        int current = 0;
+        DOTween.To(() => current, x =>
+        {
+            current = x;
+            label.text = prefix + x;
+        }, target, 0.6f).SetEase(Ease.OutQuad).SetDelay(0.1f);
     }
 
     public void Hide()

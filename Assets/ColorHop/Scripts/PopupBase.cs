@@ -22,8 +22,12 @@ public class PopupBase : MonoBehaviour
         Content.localScale = Vector3.zero;
         Backdrop.color = new Color(Backdrop.color.r, Backdrop.color.g, Backdrop.color.b, 0f);
 
-        contentTween = Content.DOScale(1f, OpenDuration).SetEase(Ease.OutBack);
-        backdropTween = Backdrop.DOFade(BackdropAlpha, OpenDuration).SetEase(Ease.OutQuad);
+        Sequence seq = DOTween.Sequence();
+        seq.Append(Content.DOScale(1.05f, OpenDuration * 0.8f).SetEase(Ease.OutQuad));
+        seq.Append(Content.DOScale(1f, OpenDuration * 0.25f).SetEase(Ease.OutQuad));
+        contentTween = seq;
+
+        backdropTween = Backdrop.DOFade(BackdropAlpha, OpenDuration * 0.6f).SetEase(Ease.OutQuad);
     }
 
     public void Close(System.Action onClosed)

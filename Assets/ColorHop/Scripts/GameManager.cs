@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     public StartCountdown StartCountdown;
     public SettingsPopup SettingsPopup;
     public UnityEngine.UI.Button SettingsButton;
+    public ConfettiBurst Confetti;
 
     public GameState State { get; private set; } = GameState.Playing;
 
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
         Debug.Assert(StartCountdown != null, "StartCountdown not assigned!");
         Debug.Assert(SettingsPopup != null, "SettingsPopup not assigned!");
         Debug.Assert(SettingsButton != null, "SettingsButton not assigned!");
+        Debug.Assert(Confetti != null, "Confetti not assigned!");
 
         SettingsButton.onClick.RemoveListener(HandleSettingsClicked);
         SettingsButton.onClick.AddListener(HandleSettingsClicked);
@@ -184,6 +186,7 @@ public class GameManager : MonoBehaviour
     private void HandleComboMilestone(string label)
     {
         ComboText.Show(label);
+        Confetti.Burst(Player.Rect.anchoredPosition);
 
         if (label == "GREAT!")
         {

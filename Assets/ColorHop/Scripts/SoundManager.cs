@@ -13,6 +13,7 @@ public class SoundManager : MonoBehaviour
     public AudioClip ColorSwitchClip;
     public AudioClip GameOverClip;
     public AudioClip ButtonClip;
+    public AudioClip MusicClip;
 
     private const string PREF_SFX_ON = "sfx_on";
     private const string PREF_MUSIC_ON = "music_on";
@@ -85,6 +86,9 @@ public class SoundManager : MonoBehaviour
         ColorSwitchClip = Resources.Load<AudioClip>("Audio/sfx_color_switch");
         GameOverClip = Resources.Load<AudioClip>("Audio/sfx_gameover");
         ButtonClip = Resources.Load<AudioClip>("Audio/sfx_button");
+        MusicClip = Resources.Load<AudioClip>("Audio/music_loop");
+
+        if (MusicClip != null) PlayMusic(MusicClip);
     }
 
     public void PlayTap() { PlaySFX(TapClip, 0.6f); }

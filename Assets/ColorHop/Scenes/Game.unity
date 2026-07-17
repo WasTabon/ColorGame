@@ -2318,6 +2318,7 @@ GameObject:
   - component: {fileID: 1039283866}
   - component: {fileID: 1039283865}
   - component: {fileID: 1039283864}
+  - component: {fileID: 1039283867}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2368,6 +2369,7 @@ MonoBehaviour:
   StartCountdown: {fileID: 1379343812}
   SettingsPopup: {fileID: 1125662225}
   SettingsButton: {fileID: 170221990}
+  Confetti: {fileID: 1039283867}
 --- !u!114 &1039283859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2492,6 +2494,24 @@ MonoBehaviour:
   GreatThreshold: 3
   AmazingThreshold: 6
   UnstoppableThreshold: 10
+--- !u!114 &1039283867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039283856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508a32052da77c24697c2b2730240aa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ParticleParent: {fileID: 1810954796}
+  ParticleCount: 24
+  Lifetime: 0.9
+  SpreadRadius: 500
+  MinSize: 18
+  MaxSize: 34
 --- !u!1 &1115386762
 GameObject:
   m_ObjectHideFlags: 0
