@@ -36,6 +36,7 @@ public class GameOverPopup : MonoBehaviour
 
     private void HandleRestart()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         Popup.Close(() =>
         {
             if (OnRestart != null) OnRestart();
@@ -44,6 +45,7 @@ public class GameOverPopup : MonoBehaviour
 
     private void HandleMenu()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         Popup.Close(() =>
         {
             if (OnMenu != null) OnMenu();

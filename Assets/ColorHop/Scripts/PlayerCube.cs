@@ -63,6 +63,17 @@ public class PlayerCube : MonoBehaviour
         squashTween = Rect.DOPunchScale(Vector3.one * 0.35f, 0.35f, 8, 0.6f);
     }
 
+    public void PlaySwitchEffect(int newColorIndex)
+    {
+        if (squashTween != null) squashTween.Kill();
+        Rect.localScale = baseScale;
+        Sequence seq = DOTween.Sequence();
+        seq.Append(Rect.DOScale(0f, 0.15f).SetEase(Ease.InBack));
+        seq.AppendCallback(() => { SetColor(newColorIndex); });
+        seq.Append(Rect.DOScale(baseScale, 0.25f).SetEase(Ease.OutBack));
+        squashTween = seq;
+    }
+
     private void PlaySquash()
     {
         if (squashTween != null) squashTween.Kill();

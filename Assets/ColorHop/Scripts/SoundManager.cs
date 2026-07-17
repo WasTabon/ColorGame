@@ -6,6 +6,14 @@ public class SoundManager : MonoBehaviour
 {
     public static SoundManager Instance { get; private set; }
 
+    public AudioClip TapClip;
+    public AudioClip MatchClip;
+    public AudioClip ComboGreatClip;
+    public AudioClip ComboAmazingClip;
+    public AudioClip ColorSwitchClip;
+    public AudioClip GameOverClip;
+    public AudioClip ButtonClip;
+
     private const string PREF_SFX_ON = "sfx_on";
     private const string PREF_MUSIC_ON = "music_on";
 
@@ -64,7 +72,28 @@ public class SoundManager : MonoBehaviour
         musicSource.loop = true;
         musicSource.volume = 0.5f;
         musicSource.mute = !musicOn;
+
+        LoadClips();
     }
+
+    private void LoadClips()
+    {
+        TapClip = Resources.Load<AudioClip>("Audio/sfx_tap");
+        MatchClip = Resources.Load<AudioClip>("Audio/sfx_match");
+        ComboGreatClip = Resources.Load<AudioClip>("Audio/sfx_combo_great");
+        ComboAmazingClip = Resources.Load<AudioClip>("Audio/sfx_combo_amazing");
+        ColorSwitchClip = Resources.Load<AudioClip>("Audio/sfx_color_switch");
+        GameOverClip = Resources.Load<AudioClip>("Audio/sfx_gameover");
+        ButtonClip = Resources.Load<AudioClip>("Audio/sfx_button");
+    }
+
+    public void PlayTap() { PlaySFX(TapClip, 0.6f); }
+    public void PlayMatch() { PlaySFX(MatchClip); }
+    public void PlayComboGreat() { PlaySFX(ComboGreatClip); }
+    public void PlayComboAmazing() { PlaySFX(ComboAmazingClip); }
+    public void PlayColorSwitch() { PlaySFX(ColorSwitchClip); }
+    public void PlayGameOver() { PlaySFX(GameOverClip); }
+    public void PlayButton() { PlaySFX(ButtonClip, 0.5f); }
 
     public void PlaySFX(AudioClip clip, float volume = 1f)
     {

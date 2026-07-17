@@ -11,6 +11,10 @@ public class GameManager : MonoBehaviour
     public RowBreaker RowBreaker;
     public HUDController HUD;
     public GameOverPopup GameOverPopup;
+    public ComboManager ComboManager;
+    public PlayerColorSwitcher ColorSwitcher;
+    public ScreenShaker ScreenShaker;
+    public ComboText ComboText;
 
     public GameState State { get; private set; } = GameState.Playing;
 
@@ -28,6 +32,10 @@ public class GameManager : MonoBehaviour
         Debug.Assert(RowBreaker != null, "RowBreaker not assigned!");
         Debug.Assert(HUD != null, "HUD not assigned!");
         Debug.Assert(GameOverPopup != null, "GameOverPopup not assigned!");
+        Debug.Assert(ComboManager != null, "ComboManager not assigned!");
+        Debug.Assert(ColorSwitcher != null, "ColorSwitcher not assigned!");
+        Debug.Assert(ScreenShaker != null, "ScreenShaker not assigned!");
+        Debug.Assert(ComboText != null, "ComboText not assigned!");
 
         Player.SetColor(0);
         Player.SetColumnInstant(2, Grid.CellSize, Grid.Columns);
@@ -37,6 +45,8 @@ public class GameManager : MonoBehaviour
         HUD.Initialize();
         ScoreManager.ResetScore();
         HUD.SetScoreImmediate(0);
+        ComboManager.ResetCombo();
+        ColorSwitcher.Initialize();
         Grid.StartGrid();
         MatchDetector.StartDetection();
         SearchTimer.StartTimer();
@@ -67,6 +77,9 @@ public class GameManager : MonoBehaviour
         GameOverPopup.OnRestart += HandleRestart;
         GameOverPopup.OnMenu -= HandleMenu;
         GameOverPopup.OnMenu += HandleMenu;
+
+        ComboManager.OnComboMilestone -= HandleComboMilestone;
+        ComboManager.OnComboMilestone += HandleComboMilestone;
     }
 
     private void UnsubscribeEvents()
@@ -89,6 +102,7 @@ public class GameManager : MonoBehaviour
             GameOverPopup.OnRestart -= HandleRestart;
             GameOverPopup.OnMenu -= HandleMenu;
         }
+        if (ComboManager != null) ComboManager.OnComboMilestone -= HandleComboMilestone;
     }
 
     private void HandleDragBegin(float pointerCanvasX)
@@ -96,6 +110,7 @@ public class GameManager : MonoBehaviour
         if (State != GameState.Playing) return;
         dragStartPointerX = pointerCanvasX;
         dragStartCubeX = Player.Rect.anchoredPosition.x;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayTap();
     }
 
     private void HandleDragMove(float pointerCanvasX)
@@ -130,8 +145,32 @@ public class GameManager : MonoBehaviour
         ScoreManager.AddScore(1);
         SearchTimer.ResetOnMatch();
         Player.PunchSuccess();
+        ComboManager.RegisterMatch();
+        ColorSwitcher.RegisterRowCleared();
+        Grid.EnsureColorInTopRow(Player.ColorIndex);
 
+        ScreenShaker.ShakeSmall();
+
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayMatch();
         if (HapticManager.Instance != null) HapticManager.Instance.Light();
+    }
+
+    private void HandleComboMilestone(string label)
+    {
+        ComboText.Show(label);
+
+        if (label == "GREAT!")
+        {
+            ScreenShaker.ShakeMedium();
+            if (SoundManager.Instance != null) SoundManager.Instance.PlayComboGreat();
+            if (HapticManager.Instance != null) HapticManager.Instance.Medium();
+        }
+        else
+        {
+            ScreenShaker.ShakeBig();
+            if (SoundManager.Instance != null) SoundManager.Instance.PlayComboAmazing();
+            if (HapticManager.Instance != null) HapticManager.Instance.Heavy();
+        }
     }
 
     private System.Collections.IEnumerator ReturnRowDelayed(RowContainer row, float delay)
@@ -166,8 +205,9 @@ public class GameManager : MonoBehaviour
         State = GameState.GameOver;
         SearchTimer.StopTimer();
         MatchDetector.StopDetection();
-        Grid.StopGrid();
+        ComboManager.BreakCombo();
 
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayGameOver();
         if (HapticManager.Instance != null) HapticManager.Instance.Medium();
 
         GameOverPopup.Show(ScoreManager.Score, ScoreManager.BestScore);

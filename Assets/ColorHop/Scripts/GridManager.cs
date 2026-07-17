@@ -16,12 +16,10 @@ public class GridManager : MonoBehaviour
     public float RowSnapThreshold = 40f;
     public float AdvanceDuration = 0.25f;
 
+    public float LastAdvanceDuration { get { return AdvanceDuration; } }
+
     private List<RowContainer> activeRows = new List<RowContainer>();
     private Queue<RowContainer> rowPool = new Queue<RowContainer>();
-    private bool running;
-
-    public bool IsRunning { get { return running; } }
-    public float LastAdvanceDuration { get { return AdvanceDuration; } }
 
     public void StartGrid()
     {
@@ -32,18 +30,6 @@ public class GridManager : MonoBehaviour
             float y = PlayerY - (i + 1) * CellSize;
             SpawnRow(y);
         }
-
-        running = true;
-    }
-
-    public void StopGrid()
-    {
-        running = false;
-    }
-
-    public void ResumeGrid()
-    {
-        running = true;
     }
 
     public RowContainer FindTopRow()
@@ -130,6 +116,16 @@ public class GridManager : MonoBehaviour
         int[] colors = GenerateRowColors();
         row.ApplyColors(colors);
         activeRows.Add(row);
+    }
+
+    public void EnsureColorInTopRow(int colorIndex)
+    {
+        RowContainer top = FindTopRow();
+        if (top == null) return;
+        if (top.ContainsColor(colorIndex)) return;
+
+        int col = Random.Range(0, Columns);
+        top.Cells[col].SetColor(colorIndex);
     }
 
     private int[] GenerateRowColors()

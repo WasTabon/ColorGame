@@ -20,16 +20,19 @@ public class MainMenuController : MonoBehaviour
 
     private void OnPlay()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         TransitionManager.Instance.LoadScene("Game");
     }
 
     private void OnSettings()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         Debug.Log("Settings pressed (panel in iteration 4)");
     }
 
     private void OnStats()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
         Debug.Log("Stats pressed (panel in iteration 4)");
     }
 }

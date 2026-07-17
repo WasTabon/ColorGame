@@ -41,6 +41,11 @@ public class MatchDetector : MonoBehaviour
             return;
         }
 
+        if (!row.ContainsColor(Player.ColorIndex))
+        {
+            Grid.EnsureColorInTopRow(Player.ColorIndex);
+        }
+
         int col = Grid.GetColumnAtX(Player.Rect.anchoredPosition.x);
         int rowColorAtCol = row.GetColorAt(col);
 
