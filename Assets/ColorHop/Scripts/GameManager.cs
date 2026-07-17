@@ -15,6 +15,9 @@ public class GameManager : MonoBehaviour
     public PlayerColorSwitcher ColorSwitcher;
     public ScreenShaker ScreenShaker;
     public ComboText ComboText;
+    public StartCountdown StartCountdown;
+    public SettingsPopup SettingsPopup;
+    public UnityEngine.UI.Button SettingsButton;
 
     public GameState State { get; private set; } = GameState.Playing;
 
@@ -36,6 +39,12 @@ public class GameManager : MonoBehaviour
         Debug.Assert(ColorSwitcher != null, "ColorSwitcher not assigned!");
         Debug.Assert(ScreenShaker != null, "ScreenShaker not assigned!");
         Debug.Assert(ComboText != null, "ComboText not assigned!");
+        Debug.Assert(StartCountdown != null, "StartCountdown not assigned!");
+        Debug.Assert(SettingsPopup != null, "SettingsPopup not assigned!");
+        Debug.Assert(SettingsButton != null, "SettingsButton not assigned!");
+
+        SettingsButton.onClick.RemoveListener(HandleSettingsClicked);
+        SettingsButton.onClick.AddListener(HandleSettingsClicked);
 
         Player.SetColor(0);
         Player.SetColumnInstant(2, Grid.CellSize, Grid.Columns);
@@ -47,10 +56,25 @@ public class GameManager : MonoBehaviour
         HUD.SetScoreImmediate(0);
         ComboManager.ResetCombo();
         ColorSwitcher.Initialize();
+        StatsManager.RegisterGamePlayed();
         Grid.StartGrid();
+        State = GameState.Playing;
+
+        StartCountdown.OnCountdownFinished -= HandleCountdownFinished;
+        StartCountdown.OnCountdownFinished += HandleCountdownFinished;
+        StartCountdown.PlayCountdown();
+    }
+
+    private void HandleCountdownFinished()
+    {
         MatchDetector.StartDetection();
         SearchTimer.StartTimer();
-        State = GameState.Playing;
+    }
+
+    private void HandleSettingsClicked()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayButton();
+        SettingsPopup.Show();
     }
 
     private void SubscribeEvents()
@@ -103,6 +127,7 @@ public class GameManager : MonoBehaviour
             GameOverPopup.OnMenu -= HandleMenu;
         }
         if (ComboManager != null) ComboManager.OnComboMilestone -= HandleComboMilestone;
+        if (StartCountdown != null) StartCountdown.OnCountdownFinished -= HandleCountdownFinished;
     }
 
     private void HandleDragBegin(float pointerCanvasX)
@@ -148,6 +173,7 @@ public class GameManager : MonoBehaviour
         ComboManager.RegisterMatch();
         ColorSwitcher.RegisterRowCleared();
         Grid.EnsureColorInTopRow(Player.ColorIndex);
+        StatsManager.RegisterBlockBroken();
 
         ScreenShaker.ShakeSmall();
 
@@ -205,6 +231,7 @@ public class GameManager : MonoBehaviour
         State = GameState.GameOver;
         SearchTimer.StopTimer();
         MatchDetector.StopDetection();
+        StatsManager.RegisterComboIfBest(ComboManager.CurrentCombo);
         ComboManager.BreakCombo();
 
         if (SoundManager.Instance != null) SoundManager.Instance.PlayGameOver();
