@@ -63,6 +63,8 @@ public class GameManager : MonoBehaviour
         Player.SetColor(0);
         Player.SetColumnInstant(2, Grid.CellSize, Grid.Columns);
 
+        DragDetector.transform.SetSiblingIndex(1);
+
         SubscribeEvents();
 
         HUD.Initialize();
